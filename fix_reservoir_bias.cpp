@@ -131,6 +131,7 @@ FixReservoirBias::FixReservoirBias(LAMMPS *lmp, int narg, char **arg) :
 
   indenter_flag = 0;
   align_flag = 0;
+  align2_flag = 0;
   indenter[0] = indenter[1] = indenter[2] = indenter[3] = indenter[4] = indenter[5] = 0.0;
   center[0] = center[1] = center[2] = 0.0;
 
@@ -215,6 +216,7 @@ void FixReservoirBias::post_force(int vflag)
 
   indenter_flag = 0;
   align_flag = 0;
+  align2_flag = 0;
   indenter[0] = indenter[1] = indenter[2] = indenter[3] = indenter[4] = indenter[5] = 0.0;
 
   // center of domain
@@ -416,7 +418,10 @@ void FixReservoirBias::apply_restraint()
   indenter[5] = nCR;
 
   // now communicate mol preferred state across procs
-  MPI_Allreduce(mol_preferred_state_local,mol_preferred_state,maxmol+1,MPI_INT,MPI_SUM,world);
+  if(align2_flag == 0){
+    MPI_Allreduce(mol_preferred_state_local,mol_preferred_state,maxmol+1,MPI_INT,MPI_SUM,world);
+    align2_flag = 1;
+  }
 
   delete [] mol_preferred_state_local;
 
@@ -465,7 +470,7 @@ void FixReservoirBias::activate_assembly_status()
 
   // now communicate new atom types across procs
   if(change_flag == 1){
-    //    printf("Atom switch just happened!\n");
+    if(me == 0)     printf("Atom switch just happened!\n");
     comm->forward_comm_fix(this);
   }
 

@@ -56,7 +56,7 @@ class FixReservoirBias : public Fix {
   double *numarea, *numarea_all; // number of atoms/area in each bin (only in xy direction)
   double indenter[6], indenter_all[6]; // stores energy and 3 force components from bias and rSL and nCR
   double center[3]; // center of simulation domain
-  int indenter_flag, align_flag;
+  int indenter_flag, align_flag, align2_flag;
 
   int *mol_preferred_state; //list of molecules state based on radial position: >0 for assembly competent, <0 for assembly incapable
   int nmol; // number of molecules open to switching
