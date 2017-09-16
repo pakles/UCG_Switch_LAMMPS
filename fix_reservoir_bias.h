@@ -58,6 +58,7 @@ class FixReservoirBias : public Fix {
   double center[3]; // center of simulation domain
   int indenter_flag, align_flag, align2_flag;
 
+  int *mol_preferred_state_local;
   int *mol_preferred_state; //list of molecules state based on radial position: >0 for assembly competent, <0 for assembly incapable
   int nmol; // number of molecules open to switching
   int maxmol; // maximum mol number to size array

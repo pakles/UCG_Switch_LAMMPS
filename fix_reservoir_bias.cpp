@@ -116,6 +116,8 @@ FixReservoirBias::FixReservoirBias(LAMMPS *lmp, int narg, char **arg) :
   w6sq = w6*w6;
   invbinwidth = 1.0/binwidth;
 
+  if(n0 <= 0.0) error->all(FLERR,"Fix reservoir/bias requires a target density n0 > 0.0");
+
   // initialize values that need to be calculated on the fly
   rSL = 0.0;
   nCR = 0.0;
@@ -125,6 +127,8 @@ FixReservoirBias::FixReservoirBias(LAMMPS *lmp, int narg, char **arg) :
   numarea_all = NULL;
   mol_preferred_state = NULL;
   // fp = NULL;
+
+  mol_preferred_state_local = new int[maxmol+1];
 
   // read options from end of input line
   // options(narg-4,&arg[4]);
@@ -369,10 +373,8 @@ void FixReservoirBias::apply_restraint()
   int *mask = atom->mask;
   int nlocal = atom->nlocal;
   int *molecule = atom->molecule;
-  int *mol_preferred_state_local = new int[maxmol+1];
 
   double delx,dely,delz,r,dr,dn,G,fmag,fx,fy,fz,dE;
-
   
   for(int i = 0; i < maxmol+1; i++){
     mol_preferred_state_local[i] = 0;
@@ -387,7 +389,7 @@ void FixReservoirBias::apply_restraint()
       domain->minimum_image(delx,dely,delz);
       r = sqrt(delx*delx + dely*dely + delz*delz);
       dr = r - (rCR + rSL);
-      dn = nCR - n0;
+      dn = (nCR - n0) / n0; //normalize such that the force constant is not dependent on concentration
       G = exp(-dr*dr/(2*w*w));
       fmag = k*dn*G;
 
@@ -417,13 +419,19 @@ void FixReservoirBias::apply_restraint()
   //  printf("The value of rSL and indenter[4] are %f and %f\n",rSL,indenter[4]);
   indenter[5] = nCR;
 
+  //if(me == 0){
+  //  for(int i = 0; i < maxmol+1; i++) printf("mol_preferred_state_local[i] is %d\n",mol_preferred_state_local[i]);
+  //}
   // now communicate mol preferred state across procs
   if(align2_flag == 0){
     MPI_Allreduce(mol_preferred_state_local,mol_preferred_state,maxmol+1,MPI_INT,MPI_SUM,world);
     align2_flag = 1;
   }
 
-  delete [] mol_preferred_state_local;
+  //for(int i = 0; i < maxmol+1; i++) printf("mol_preferred_state_global[i] is %d\n",mol_preferred_state[i]);
+
+
+  //  delete [] mol_preferred_state_local;
 
   //modify->addstep_compute(update->ntimestep + nevery);
 }
@@ -469,10 +477,10 @@ void FixReservoirBias::activate_assembly_status()
   }
 
   // now communicate new atom types across procs
-  if(change_flag == 1){
-    if(me == 0)     printf("Atom switch just happened!\n");
-    comm->forward_comm_fix(this);
-  }
+  //if(change_flag == 1){
+  //  if(me == 0)     printf("Atom switch just happened!\n");
+  //  comm->forward_comm_fix(this);
+  //}
 
 }
 
