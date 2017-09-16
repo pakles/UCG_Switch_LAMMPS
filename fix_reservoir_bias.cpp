@@ -393,20 +393,23 @@ void FixReservoirBias::apply_restraint()
       G = exp(-dr*dr/(2*w*w));
       fmag = k*dn*G;
 
-      if(dr*dr <= w6sq) continue; 
+      // if within a cutoff from the barrier, apply force
+      if(dr*dr <= w6sq) {
 
-      dE = k * dn * (MY_PIS/MY_SQRT2) * w * erfc( -dr / (MY_SQRT2*w) );
+	dE = k * dn * (MY_PIS/MY_SQRT2) * w * erfc( -dr / (MY_SQRT2*w) );
 
-      fx = delx*fmag/r;
-      fy = dely*fmag/r;
-      fz = delz*fmag/r;
-      f[i][0] += fx;
-      f[i][1] += fy;
-      f[i][2] += fz;
-      indenter[0] -= dE; 
-      indenter[1] -= fx;
-      indenter[2] -= fy;
-      indenter[3] -= fz;
+	fx = delx*fmag/r;
+	fy = dely*fmag/r;
+	fz = delz*fmag/r;
+	f[i][0] += fx;
+	f[i][1] += fy;
+	f[i][2] += fz;
+	indenter[0] -= dE; 
+	indenter[1] -= fx;
+	indenter[2] -= fy;
+	indenter[3] -= fz;
+	
+      }
 
       // determine if this molecule should be ON or OFF based on majority within rSL+rCR
       int molID = molecule[i];
